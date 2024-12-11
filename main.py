@@ -4,10 +4,13 @@ import aiohttp
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
+from googletrans import Translator
 from config import TOKEN, WEATHER_API_KEY
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
+translator = Translator()  # Инициализация переводчика
 
 # Список городов для прогноза
 CITIES = ["Москва", "Санкт-Петербург", "Новосибирск", "Екатеринбург", "Казань", "Ташкент", "Паттайя"]
@@ -93,14 +96,22 @@ async def aitext(message: Message):
 async def help_command(message: Message):
     await message.answer('Этот бот умеет выполнять команды: \n /start \n /help \n /weather \n /photo')
 
+
+@dp.message(F.text & ~F.text.startswith("/"))  # Исключаем команды
+async def translate_text(message: Message):
+    """Перевод текста пользователя на английский"""
+    try:
+        translated = translator.translate(message.text, src='auto', dest='en')
+        await message.answer(f"Перевод на английский:\n{translated.text}")
+    except Exception as e:
+        await message.answer(f"Произошла ошибка при переводе: {e}")
+
+
 @dp.message(CommandStart)
 async def start(message: Message):
-    await message.answer(f'Приветики, {message.from_user.first_name} ! Я бот! Могу показать погоду, фотки и многое другое!')
+    await message.answer(f'Приветики, {message.from_user.first_name}! Я бот! Могу показать погоду, фотки и многое другое!')
 
-@dp.message()
-async def test(message: Message):
-    if message.text.lower() == "тест":
-        await message.send_copy("тестируем")
+
 
 async def main():
     # Запускаем polling
