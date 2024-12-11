@@ -3,7 +3,7 @@ import random
 import aiohttp
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton, FSInputFile
 from config import TOKEN, WEATHER_API_KEY
 
 bot = Bot(token=TOKEN)
@@ -49,7 +49,19 @@ async def city_weather(message: Message):
     forecast = await get_weather(city)
     await message.answer(forecast)
 
-@dp.message(Command("photo"))
+@dp.message(Command("video"))
+async def video(message: Message):
+    await bot.send_chat_action(message.chat.id, 'upload_video')
+    video = FSInputFile("video_2024-12-12_00-32-27.mp4")
+    await bot.send_video(message.chat.id, video)
+
+@dp.message(Command("audio"))
+async def audio(message: Message):
+    audio = FSInputFile("audio_2024-12-12_00-29-24.ogg")
+    await bot.send_audio(message.chat.id, audio)
+
+
+@dp.message(Command("photo", prefix='/'))
 async def photo(message: Message):
     photos = [
         'http://cdn.fishki.net/upload/post/201508/06/1619927/3_2.jpg',
@@ -71,6 +83,7 @@ async def react_photo(message: Message):
     ]
     rand_response = random.choice(responses)
     await message.answer(rand_response)
+    await bot.download(message.photo[-1], destination=f'img/{message.photo[-1].file_id}.jpg')
 
 @dp.message(F.text == "Что такое ИИ?")
 async def aitext(message: Message):
@@ -82,11 +95,12 @@ async def help_command(message: Message):
 
 @dp.message(CommandStart)
 async def start(message: Message):
-    await message.answer('Приветики! Я бот! Могу показать погоду, фотки и многое другое!')
+    await message.answer(f'Приветики, {message.from_user.first_name} ! Я бот! Могу показать погоду, фотки и многое другое!')
 
 @dp.message()
-async def echo(message: Message):
-    await message.send_copy(chat_id=message.chat.id)
+async def test(message: Message):
+    if message.text.lower() == "тест":
+        await message.send_copy("тестируем")
 
 async def main():
     # Запускаем polling
